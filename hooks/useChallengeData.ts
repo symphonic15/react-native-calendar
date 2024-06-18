@@ -3,7 +3,17 @@ import { sortByDayAndHour, sortByYearAndMonth } from "@/utils/sortDates";
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 
-export default function useChallengeData(): ChallengeData | null {
+interface UseChallengeDataResult {
+  challengeData: ChallengeData | null;
+  setActionName: (
+    actionId: string,
+    month: number,
+    year: number,
+    name: string
+  ) => void;
+}
+
+export default function useChallengeData(): Readonly<UseChallengeDataResult> {
   const [challengeData, setChallengeData] = useState<ChallengeData | null>(
     null
   );
@@ -29,6 +39,36 @@ export default function useChallengeData(): ChallengeData | null {
     }
   }, []);
 
+  const setActionName = (
+    actionId: string,
+    month: number,
+    year: number,
+    name: string
+  ) => {
+    if (!challengeData) return;
+
+    setChallengeData({
+      ...challengeData,
+      calendar: challengeData.calendar.map((calendarItem) => {
+        if (calendarItem.month === month && calendarItem.year === year) {
+          return {
+            ...calendarItem,
+            actions: calendarItem.actions.map((action) => {
+              if (action.id === actionId) {
+                return {
+                  ...action,
+                  name,
+                };
+              }
+              return action;
+            }),
+          };
+        }
+        return calendarItem;
+      }),
+    });
+  };
+
   const sortCalendar = (data: Calendar[]) => {
     let sortedCalendar = sortByYearAndMonth(data);
 
@@ -39,5 +79,5 @@ export default function useChallengeData(): ChallengeData | null {
     return sortedCalendar;
   };
 
-  return challengeData;
+  return { challengeData, setActionName };
 }
